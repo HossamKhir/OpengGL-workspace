@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="tempelate-opengl-codeblocks-win" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/tempelate-opengl-codeblocks-win" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/tempelate-opengl-codeblocks-win" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add directory="C:/opengl-wrappers/glfw-3.3.2/include" />
+			<Add directory="C:/opengl-wrappers/glad/include" />
+			<Add directory="C:/mingw-w64/mingw64/include" />
+		</Compiler>
+		<Linker>
+			<Add library="opengl32" />
+			<Add library="glfw3" />
+			<Add library="gdi32" />
+			<Add directory="C:/opengl-wrappers/glfw-3.3.2/src" />
+			<Add directory="C:/mingw-w64/mingw64/lib" />
+		</Linker>
+		<Unit filename="glad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="glfw-official-example.cpp" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

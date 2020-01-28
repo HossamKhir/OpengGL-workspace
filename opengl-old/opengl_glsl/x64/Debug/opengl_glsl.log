@@ -1,0 +1,22 @@
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (opengl_glsl.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  stdafx.cpp
+  triangle.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+  stack_of_matrices.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+d:\workspace\opengl_old\opengl_glsl\stack_of_matrices.cpp(8): warning C4305: 'initializing': truncation from 'double' to 'float'
+d:\workspace\opengl_old\opengl_glsl\stack_of_matrices.cpp(21): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+  quad.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+  main.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+d:\workspace\opengl_old\opengl_glsl\main.cpp(41): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+  glfw-basic-app.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+  circle.cpp
+d:\workspace\opengl_old\opengl_glsl\constants.h(11): warning C4305: 'initializing': truncation from 'double' to 'float'
+  Generating Code...
+d:\workspace\opengl_old\opengl_glsl\glfw-basic-app.cpp(54): warning C4715: 'glfw_basic_app': not all control paths return a value
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  opengl_glsl.vcxproj -> D:\workspace\opengl_old\x64\Debug\opengl_old.exe
+  opengl_glsl.vcxproj -> D:\workspace\opengl_old\x64\Debug\opengl_old.pdb (Full PDB)
