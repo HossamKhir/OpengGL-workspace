@@ -17,6 +17,29 @@
 	in the pixel shader
 	>	to make smooth gradient transition, a resolution uniform is needed
  */
+
+/*
+	>	Homogenous coordinates: for expressing translation in uniform metrics
+	by using uniform matrix stack & matrix concatenations
+	>	3D graphics utilise 4-dimensional matrices
+	>	matrix multiplication conventions:
+		translation matrix 
+			| 1 0 0 tx |
+			| 0 1 0 ty |
+			| 0 0 1 tz |
+			| 0 0 0 1  |
+		scaling matrix
+			|sx  0 0  0 |
+			|0  sy 0  0 |
+			|0  0  sz 0 |
+			|0  0  0  1 |
+		rotation matrices:
+		around z:			around x:			around y:
+		| cosB -sinB 0 0 |	| 1    0    0 0 |	|  cosB 0 sinB 0 |
+		| sinB  cosB 0 0 |	|0 cosB -sinB 0 |	|     0 1    0 0 |
+		|    0     0 1 0 |	|0 sinB  cosB 0 |	| -sinB 0 cosB 0 |
+		|    0     0 0 1 |	|0    0     0 1 |	|     0 0    0 1 |
+*/
 //============================================================================
 
 #include <iostream>
