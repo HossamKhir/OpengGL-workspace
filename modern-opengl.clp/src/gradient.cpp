@@ -1,60 +1,52 @@
-// main.cpp : Defines the entry point for the console application.
-//============================================================================
 /*
-	>	data for vertex shader like colours & geometric positions, can be
-	defined as RAM buffers inside system RAM
-	>	allows for using glAttribPointer & pass a pointer to RAM buffer to it
-	>	glBufferData copies data to GPU's RAM
-	>	the last argument to glAttribPointer is a relative offset inside the
-	buffer
-
-	>	VAO: Vertex Array Object
-	>	using VAOs preserves effort, by calling one call to glBindVertexArray
+ * gradient.cpp
+ *
+ *  Created on: 9 Mar 2020
+ *      Author: hossam
  */
 
- /*
-	 >	gl_FragCoord: special variable contains the current pixel coordinates
-	 in the pixel shader
-	 >	to make smooth gradient transition, a resolution uniform is needed
-  */
-  //============================================================================
 
-#include <iostream>
-#include <glad\glad.h>
-#include <GLFW/glfw3.h>
-#include <math.h>
 
-#include "rotating_square.h"
-#include "multi_vbo.h"
+
+#include "gradient.h"
+
 
 using namespace std;
 
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcGradVertex120 = R"END(
+const GLchar* pglcGradientVertex120 = R"END(
 	 #version 120
 	 attribute vec3 inPosition;
 	 void main()
 	 {
-		gl_Position = vec4(inPosition, 1);
+		 gl_Position = vec4(inPosition, 1);
 	 }
 	 )END";
 // fragment shader: fills the screen
-const GLchar* pglcGradRaster120 = R"END(
+const GLchar* pglcGradientRaster120 = R"END(
 	 #version 120
 	 uniform vec2 resolution;	// required for proper gradient transition
+	 // define a time variable
+	 uniform float time;
 	 void main()
 	 {
-		float intensity = gl_FragCoord.y / resolution.y;	// for smooth transition
-													// from 0 to 1
-		gl_FragColor = vec4(intensity, intensity, intensity, 1);// greyscale
+		 // for smooth transition from 0 to 1
+		 float intensity = 1.f  - (gl_FragCoord.y / resolution.y);
+		 // using time for graphical effects
+		 gl_FragColor = vec4(intensity * abs(sin(intensity * time)), 
+							// update from 0 to 1
+		 						abs(sin(intensity * time * 3.0f)),
+							// for some phase shift
+								intensity * abs(sin(time / 2.0f)),
+								1.0f);
 	 }
 	 )END";
 //============================================================================
 
 int
-main(void)
+gradient(void)
 {
 	GLFWwindow* glfwWindow;
 
@@ -85,7 +77,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcGradVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcGradientVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -116,7 +108,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcGradRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcGradientRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -210,16 +202,27 @@ main(void)
 	// configure attribute stripe, specify the format
 	glVertexAttribPointer(gluAttribPosition, 3, GL_FLOAT, GL_FALSE, 0 /* stripe size is currently irrelevant */, 0);
 
+	//============================================================================
 	// resolution uniform
 	GLuint gluUniformResolution;
-	gluUniformResolution = glGetUniformLocation(gluShaderProgramme, "resolution");
-	glUniform2f(gluUniformResolution, (float)SCREEN_WIDTH, (float)SCREEN_HIEGHT);
+	gluUniformResolution = glGetUniformLocation(gluShaderProgramme,"resolution");
+	glUniform2f(gluUniformResolution,(float)SCREEN_WIDTH,(float)SCREEN_HIEGHT);
+	//============================================================================
+	// uniform time
+	GLuint gluUniformTime;
+	gluUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
 	//============================================================================
 	// render loop
 	while (!glfwWindowShouldClose(glfwWindow))
 	{
 		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		//============================================================================
+		// each update loop
+		float fltTime = glfwGetTime();
+		glUniform1f(gluUniformTime, fltTime);
+		//============================================================================
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 

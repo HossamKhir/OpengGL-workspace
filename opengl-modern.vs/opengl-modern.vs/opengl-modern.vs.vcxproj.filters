@@ -24,9 +24,15 @@
     <ClCompile Include="rotating_square.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="multi_vbo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rotating_square.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="multi_vbo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -154,9 +154,11 @@
   <ItemGroup>
     <ClCompile Include="C:\opengl-wrappers\glad\src\glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="multi_vbo.cpp" />
     <ClCompile Include="rotating_square.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="multi_vbo.h" />
     <ClInclude Include="rotating_square.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
