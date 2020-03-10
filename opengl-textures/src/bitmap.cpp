@@ -1,46 +1,11 @@
-// main.cpp : Defines the entry point for the console application.
-//============================================================================
-/*
-	>	texture: a 2D image in RAM with coordinate system (UV or ST), ranges
-	form bottom left to both sides
-	>	steps:
-	1.	generate texture ID
-	2.	bind the texture to a gateway
-	3.	supply the texture with actual pixel data 
-*/
-/*
-	>	from shader's perspective, we must specify the coordinates of each 
-	vertex inside the texture
-	>	in the fragment shader, for each individual pixel, there is a varying
-	input "texCoord" which is smoother interpolated
-*/
-/*
-	>	to access texture data, usage of special uniform type sampler2D is
-	required
-	>	it is possible to use multiple textures
-*/
-/*
-	>	loading textures from bmp files requires a library "bmpread"
-*/
-//============================================================================
-
-#include <iostream>
-#include <glad\glad.h>
-#include <GLFW/glfw3.h>
-#include <math.h>
-
-#include "texture.h"
 #include "bitmap.h"
 
 using namespace std;
 
-#define	SCREEN_WIDTH	1920
-#define	SCREEN_HIEGHT	1080
-
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcVertex120 = R"END(
+const GLchar* pglcBitmapVertex120 = R"END(
 	 #version 120
 	 attribute vec3 inPosition;
 	 //============================================================================
@@ -59,7 +24,7 @@ const GLchar* pglcVertex120 = R"END(
 	 }
 	 )END";
 // fragment shader: fills the screen
-const GLchar* pglcRaster120 = R"END(
+const GLchar* pglcBitmapRaster120 = R"END(
 	 #version 120
 	 uniform vec2 resolution;	// required for proper gradient transition
 	 // define a time variable
@@ -80,9 +45,9 @@ const GLchar* pglcRaster120 = R"END(
 //============================================================================
 
 int
-main(void)
+bitmap(void)
 {
-	GLFWwindow* glfwWindow;
+    GLFWwindow* glfwWindow;
 
 	if (!glfwInit())
 	{
@@ -111,7 +76,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcBitmapVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -142,7 +107,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcBitmapRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
