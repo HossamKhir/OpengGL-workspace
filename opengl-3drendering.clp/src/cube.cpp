@@ -1,28 +1,21 @@
-// main.cpp : Defines the entry point for the console application.
-//============================================================================
 /*
-	>	for 3D rendering, the 3rd dimension in space (z-axis) will be required
-	>	for a 3D cube, it has 6 faces, each face built using 2 triangles, so
-	the winding direction should be fixed (clockwise)
-*/
-//============================================================================
+ * cube.cpp
+ *
+ *  Created on: 11 Mar 2020
+ *      Author: hossam
+ */
 
-#include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <math.h>
+
+
 
 #include "cube.h"
 
 using namespace std;
 
-#define	SCREEN_WIDTH	1920
-#define	SCREEN_HEIGHT	1080
-
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcVertex120 = R"END(
+const GLchar* pglcCubeVertex120 = R"END(
 	#version 120
 	attribute vec3 position;
 	attribute vec3 colour;
@@ -51,7 +44,7 @@ const GLchar* pglcVertex120 = R"END(
 	}
 	)END";
 // fragment shader: fills the screen
-const GLchar* pglcRaster120 = R"END(
+const GLchar* pglcCubeRaster120 = R"END(
 	#version 120
 	varying vec3 outColour;
 	uniform float time;
@@ -63,7 +56,7 @@ const GLchar* pglcRaster120 = R"END(
 //============================================================================
 
 int
-main(void)
+cube(void)
 {
 	GLFWwindow* glfwWindow;
 
@@ -94,7 +87,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcCubeVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -125,7 +118,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcCubeRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -196,7 +189,7 @@ main(void)
 	  4 *  |   * 3 <-- 7 is the last vertex behind the visible faces
 		 \ |  /
 		   *
-		   0   
+		   0
 	*/
 
 	// setting up the cube using indexed drawing
@@ -225,7 +218,7 @@ main(void)
         1, 0, 0
 	};
 
-	/* defining the indices, to refer to the vertices to create triangles using 
+	/* defining the indices, to refer to the vertices to create triangles using
 	indices only */
 	GLubyte glubIndices[] = {
 		0, 1, 2,	// front right face, triangle 0
@@ -280,11 +273,11 @@ main(void)
         0, 0, 0.5, 0,
         0, 0, 0, 1
     };
-    
+
     GLuint gluiAttribMatrix;
     gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
     glUniformMatrix4fv(gluiAttribMatrix, 1, GL_FALSE, glfMatrix);
-    
+
     GLuint gluiUniformTime;
     gluiUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
 	//============================================================================
