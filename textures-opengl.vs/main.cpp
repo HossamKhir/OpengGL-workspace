@@ -40,7 +40,7 @@
 using namespace std;
 
 #define	SCREEN_WIDTH	1920
-#define	SCREEN_HIEGHT	1080
+#define	SCREEN_HEIGHT	1080
 
 //============================================================================
 // shader source codes
@@ -95,7 +95,7 @@ main(void)
 		return -1;
 	}
 
-	glfwWindow = glfwCreateWindow((0.9f * SCREEN_WIDTH), (0.9f * SCREEN_HIEGHT), "Modern OpenGL\n", 0, 0);
+	glfwWindow = glfwCreateWindow((0.9f * SCREEN_WIDTH), (0.9f * SCREEN_HEIGHT), "Modern OpenGL\n", 0, 0);
 
 	if (!glfwWindow)
 	{
@@ -312,7 +312,7 @@ main(void)
 	// resolution uniform
 	GLuint gluUniformResolution;
 	gluUniformResolution = glGetUniformLocation(gluShaderProgramme,"resolution");
-	glUniform2f(gluUniformResolution,(float)SCREEN_WIDTH,(float)SCREEN_HIEGHT);
+	glUniform2f(gluUniformResolution,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
 	//============================================================================
 	// uniform time
 	GLuint gluUniformTime;

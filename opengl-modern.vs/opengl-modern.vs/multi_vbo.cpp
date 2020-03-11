@@ -38,7 +38,7 @@ multi_vbo(void)
 		return -1;
 	}
 
-	glfwWindow = glfwCreateWindow((0.9f * SCREEN_WIDTH), (0.9 * SCREEN_HIEGHT), "Modern OpenGL\n", 0, 0);
+	glfwWindow = glfwCreateWindow((0.9f * SCREEN_WIDTH), (0.9 * SCREEN_HEIGHT), "Modern OpenGL\n", 0, 0);
 
 	if (!glfwWindow)
 	{

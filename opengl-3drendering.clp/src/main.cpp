@@ -1,97 +1,63 @@
 // main.cpp : Defines the entry point for the console application.
 //============================================================================
 /*
-	>	data for vertex shader like colours & geometric positions, can be 
-	defined as RAM buffers inside system RAM
-	>	allows for using glAttribPointer & pass a pointer to RAM buffer to it
-	>	glBufferData copies data to GPU's RAM
-	>	the last argument to glAttribPointer is a relative offset inside the
-	buffer
-
-	>	VAO: Vertex Array Object
-	>	using VAOs preserves effort, by calling one call to glBindVertexArray
- */
-
-/*
-	>	gl_FragCoord: special variable contains the current pixel coordinates
-	in the pixel shader
-	>	to make smooth gradient transition, a resolution uniform is needed
- */
-
-/*
-	>	Homogenous coordinates: for expressing translation in uniform metrics
-	by using uniform matrix stack & matrix concatenations
-	>	3D graphics utilise 4-dimensional matrices
-	>	matrix multiplication conventions:
-		translation matrix 
-			| 1 0 0 tx |
-			| 0 1 0 ty |
-			| 0 0 1 tz |
-			| 0 0 0 1  |
-		scaling matrix
-			|sx  0 0  0 |
-			|0  sy 0  0 |
-			|0  0  sz 0 |
-			|0  0  0  1 |
-		rotation matrices:
-		around z:			around x:			around y:
-		| cosB -sinB 0 0 |	| 1    0    0 0 |	|  cosB 0 sinB 0 |
-		| sinB  cosB 0 0 |	|0 cosB -sinB 0 |	|     0 1    0 0 |
-		|    0     0 1 0 |	|0 sinB  cosB 0 |	| -sinB 0 cosB 0 |
-		|    0     0 0 1 |	|0    0     0 1 |	|     0 0    0 1 |
+	>	for 3D rendering, the 3rd dimension in space (z-axis) will be required
+	>	for a 3D cube, it has 6 faces, each face built using 2 triangles, so
+	the winding direction should be fixed (clockwise)
 */
 //============================================================================
 
 #include <iostream>
-#include <glad\glad.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
 
-#include "rotating_square.h"
-#include "multi_vbo.h"
-#include "gradient.h"
-#include "circle.h"
-
 using namespace std;
+
+#define	SCREEN_WIDTH	1920
+#define	SCREEN_HEIGHT	1080
 
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcVertex120 = R"END(
-	 #version 120
-	 attribute vec3 inPosition;
-	 void main()
-	 {
-		 gl_Position = vec4(inPosition, 1);
-	 }
-	 )END";
-// fragment shader: fills the screen
-const GLchar* pglcRaster120 = R"END(
-	 #version 120
-	 uniform vec2 resolution;	// required for proper gradient transition
-	 // define a time variable
-	 uniform float time;
-	 void main()
-	 {
-		 //============================================================================
-		 // drawing a circle
-		 vec2 centre = resolution / 2.0f;	// define centre point
-		 
-		 vec2 currentPoint = gl_FragCoord.xy;	// get current point
-		 // gl_FragCoord is vec4, hence we need xy only for vec2
+const GLchar* pglcCubeVertex120 = R"END(
+	#version 120
+	attribute vec3 position;
+	attribute vec3 colour;
+	varying vec3 outColour;
+	uniform float time;
+	uniform mat4 matrix;
+	void main()
+	{
+		float theta = time;
+		
+		float co = cos(theta);
+		float si = sin(theta);
 
-		 // check location of current point, inside or outside the circle
-		 if(length(currentPoint - centre) < 100.0f)	// 100.0f is supposedly the radius
-		 {
-			 gl_FragColor = vec4(1, 1, 1, 1);	// white
-		 }
-		 else
-		 {
-			 gl_FragColor = vec4(0, 0, 0, 1);	// black
-		 }
-		 //============================================================================
-	 }
-	 )END";
+		mat4 rotationY = mat4(co, 0, si, 0,
+							0, 1, 0, 0,
+							-si, 0, co, 0,
+							0, 0, 0, 1);
+
+		mat4 rotationX = mat4(1, 0, 0, 0,
+							0, co, -si, 0,
+							0, si, co, 0,
+							0, 0, 0, 1);
+
+		outColour = colour;
+		gl_Position = matrix * rotationY * rotationX * vec4(position,1.f);
+	}
+	)END";
+// fragment shader: fills the screen
+const GLchar* pglcCubeRaster120 = R"END(
+	#version 120
+	varying vec3 outColour;
+	uniform float time;
+	void main()
+	{
+		gl_FragColor = vec4(outColour,1);
+	}
+	)END";
 //============================================================================
 
 int
@@ -126,7 +92,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcCubeVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -157,7 +123,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcCubeRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -214,64 +180,111 @@ main(void)
 	glUseProgram(gluShaderProgramme);
 	// unless changed, this means that all draw calls used afterwards use this context
 	//============================================================================
-	// Multiple VBOs
-	// there can be a set of input buffers, each representing a parameter (colour, coordinates)
-	// these buffers are then must be bound to the vertex shader
+	// the texture image is printed reversed, one solution is transformation matrix
+	GLfloat glfMatrix[] = {	// an identity matrix
+		-1, 0, 0, 0,		// reversing x axis
+		0, -1, 0, 0,		// reversing y axis, both allow for rotation around z axis
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+	//============================================================================
+	// indexed drawing
+	/*
+		indexed drawing: each vertex must have a unique index, and each triangle is
+		defined by indices not vertices
+		    6
+			*
+		  /   \
+	  5 *      * 2
+		|\ 1  /|
+		|  *   |
+		|  |   |
+	  4 *  |   * 3 <-- 7 is the last vertex behind the visible faces
+		 \ |  /
+		   *
+		   0   
+	*/
 
-	// vertex coordinates
-	// using 2 different VBOs
-	GLfloat glfPositions[] = {	// selecting clockwise
-			-1,	-1,	0,
-			-1,	 1,	0,
-			1,	-1,	0,
-			1,	-1,	0,
-			-1,	 1,	0,
-			1,	 1,	0
+	// setting up the cube using indexed drawing
+	// defining the vertices in clockwise direction
+	GLfloat glfVertices[] = {
+		-1, -1, +1, // index 0
+        -1, +1, +1,	// index 1
+        +1, +1, +1,	// index 2
+        +1, -1, +1,	// index 3
+        -1, -1, -1,	// index 4
+        -1, +1, -1,	// index 5
+        +1, +1, -1, // index 6
+        +1, -1, -1, // index 7
 	};
 
-	// creating vertex buffer objects
-	// VBO handle
-	GLuint gluDataPositions;
-	// generate buffer
-	glGenBuffers(1, &gluDataPositions);	// gluDataPositions is the handle for the buffer now
-	// bind the buffer
-	glBindBuffer(GL_ARRAY_BUFFER, gluDataPositions);	// acts as a gateway
-	// send the data to the GPU
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glfPositions), glfPositions, GL_STATIC_DRAW); // acts like memcpy() but from RAM to GPU
-	//============================================================================
-	// setting up attributes
-	GLuint gluAttribPosition;
-	
-	// get the location of the attribute
-	gluAttribPosition = glGetAttribLocation(gluShaderProgramme, "inPosition");
-	// enable the attribute
-	glEnableVertexAttribArray(gluAttribPosition);	// some shader can dynamically disable/enable attributes
-	// bind the buffer to link the data from position VBO to attribute
-	glBindBuffer(GL_ARRAY_BUFFER, gluDataPositions);
-	// configure attribute stripe, specify the format
-	glVertexAttribPointer(gluAttribPosition, 3, GL_FLOAT, GL_FALSE, 0 /* stripe size is currently irrelevant */, 0);
+	/* defining colours for vertices, it must be in the same order as the
+	vertices as it will be indexed as well */
+	GLfloat glfColours[] = {
+		1, 0, 0, // red, green, blue
+        0, 1, 0,
+        0, 0, 1,
+        1, 0, 1,
+        1, 1, 0,
+        0, 1, 1,
+        0, 1, 0,
+        1, 0, 0
+	};
 
+	/* defining the indices, to refer to the vertices to create triangles using 
+	indices only */
+	GLubyte glubIndices[] = {
+		0, 1, 2,	// front right face, triangle 0
+		0, 2, 3,	// front right face, triangle 1
+		0, 4, 5,	// front left face, triangle 0
+        0, 5, 1,	// front left face, triangle 1
+        1, 5, 6,	// top face, triangle 0
+        1, 6, 2,	// top face, triangle 1
+        3, 2, 6,	// back right face, triangle 0
+        3, 6, 7,	// back right face, triangle 1
+        4, 0, 3,	// bottom face, triangle 0
+//		4, 3, 7,	// bottom face, triangle 1
+        7, 6, 5,	// back left face, triangle 0
+        7, 5, 4,	// back left face, triangle 1
+	};
 	//============================================================================
-	// resolution uniform
-	GLuint gluUniformResolution;
-	gluUniformResolution = glGetUniformLocation(gluShaderProgramme,"resolution");
-	glUniform2f(gluUniformResolution,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
+	// defining VBOs
+	// vertices buffer
+	GLuint gluiVerticesBuffer;
+	glGenBuffers(1, &gluiVerticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiVerticesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glfVertices), glfVertices, GL_STATIC_DRAW);
+
+	// colours buffer
+	GLuint gluiColoursBuffer;
+	glGenBuffers(1, &gluiColoursBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiColoursBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glfColours), glfColours, GL_STATIC_DRAW);
+
+	//indices buffer
+	GLuint gluiIndicesBuffer;
+	glGenBuffers(1, &gluiIndicesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gluiIndicesBuffer);	// indices are used in elements buffer
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glubIndices), glubIndices, GL_STATIC_DRAW);
 	//============================================================================
-	// uniform time
-	GLuint gluUniformTime;
-	gluUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
+	// defining attributes
+	GLuint gluiAttribPosition;
+	gluiAttribPosition = glGetAttribLocation(gluShaderProgramme, "position");
+	glEnableVertexAttribArray(gluiAttribPosition);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiVerticesBuffer);
+	glVertexAttribPointer(gluiAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	GLuint gluiAttribColour;
+	gluiAttribColour = glGetAttribLocation(gluShaderProgramme, "colour");
+	glEnableVertexAttribArray(gluiAttribColour);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiColoursBuffer);
+	glVertexAttribPointer(gluiAttribColour, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//============================================================================
 	// render loop
 	while (!glfwWindowShouldClose(glfwWindow))
 	{
 		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
-
-		//============================================================================
-		// each update loop
-		float fltTime = glfwGetTime();
-		glUniform1f(gluUniformTime, fltTime);
-		//============================================================================
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
