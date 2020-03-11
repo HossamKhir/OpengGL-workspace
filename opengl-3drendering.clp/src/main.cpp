@@ -180,14 +180,6 @@ main(void)
 	glUseProgram(gluShaderProgramme);
 	// unless changed, this means that all draw calls used afterwards use this context
 	//============================================================================
-	// the texture image is printed reversed, one solution is transformation matrix
-	GLfloat glfMatrix[] = {	// an identity matrix
-		-1, 0, 0, 0,		// reversing x axis
-		0, -1, 0, 0,		// reversing y axis, both allow for rotation around z axis
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
-	//============================================================================
 	// indexed drawing
 	/*
 		indexed drawing: each vertex must have a unique index, and each triangle is
@@ -243,7 +235,7 @@ main(void)
         3, 2, 6,	// back right face, triangle 0
         3, 6, 7,	// back right face, triangle 1
         4, 0, 3,	// bottom face, triangle 0
-//		4, 3, 7,	// bottom face, triangle 1
+		4, 3, 7,	// bottom face, triangle 1
         7, 6, 5,	// back left face, triangle 0
         7, 5, 4,	// back left face, triangle 1
 	};
@@ -280,13 +272,37 @@ main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, gluiColoursBuffer);
 	glVertexAttribPointer(gluiAttribColour, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//============================================================================
+	GLfloat glfMatrix[] = {
+        0.5, 0, 0, 0,
+        0, 0.5, 0, 0,
+        0, 0, 0.5, 0,
+        0, 0, 0, 1
+    };
+    
+    GLuint gluiAttribMatrix;
+    gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
+    glUniformMatrix4fv(gluiAttribMatrix, 1, GL_FALSE, glfMatrix);
+    
+    GLuint gluiUniformTime;
+    gluiUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
+	//============================================================================
+	// fixing the order of drawing problem
+	glEnable(GL_CULL_FACE);	// clockwise backface culling
+	//============================================================================
 	// render loop
 	while (!glfwWindowShouldClose(glfwWindow))
 	{
 		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		float time = glfwGetTime();
+        glUniform1f(gluiUniformTime, time);
+
+		//============================================================================
+		// indexed drawing requires call of a different function
+		glDrawElements(GL_TRIANGLES, sizeof(glubIndices), GL_UNSIGNED_BYTE, 0);
+		//============================================================================
+		// glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glfwSwapBuffers(glfwWindow);
 		glfwPollEvents();
