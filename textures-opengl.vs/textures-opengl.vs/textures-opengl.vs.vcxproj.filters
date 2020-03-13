@@ -15,24 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\opengl-wrappers\glad\src\glad.c">
+    <ClCompile Include="..\bmpread.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="..\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rotating_square.cpp">
+    <ClCompile Include="..\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="multi_vbo.cpp">
+    <ClCompile Include="..\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rotating_square.h">
+    <ClInclude Include="..\texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="multi_vbo.h">
+    <ClInclude Include="..\bmpread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

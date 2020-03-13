@@ -1,54 +1,80 @@
 // main.cpp : Defines the entry point for the console application.
 //============================================================================
 /*
-	>	data for vertex shader like colours & geometric positions, can be
-	defined as RAM buffers inside system RAM
-	>	allows for using glAttribPointer & pass a pointer to RAM buffer to it
-	>	glBufferData copies data to GPU's RAM
-	>	the last argument to glAttribPointer is a relative offset inside the
-	buffer
-
-	>	VAO: Vertex Array Object
-	>	using VAOs preserves effort, by calling one call to glBindVertexArray
- */
-
- /*
-	 >	gl_FragCoord: special variable contains the current pixel coordinates
-	 in the pixel shader
-	 >	to make smooth gradient transition, a resolution uniform is needed
-  */
-  //============================================================================
+	>	texture: a 2D image in RAM with coordinate system (UV or ST), ranges
+	form bottom left to both sides
+	>	steps:
+	1.	generate texture ID
+	2.	bind the texture to a gateway
+	3.	supply the texture with actual pixel data 
+*/
+/*
+	>	from shader's perspective, we must specify the coordinates of each 
+	vertex inside the texture
+	>	in the fragment shader, for each individual pixel, there is a varying
+	input "texCoord" which is smoother interpolated
+*/
+/*
+	>	to access texture data, usage of special uniform type sampler2D is
+	required
+	>	it is possible to use multiple textures
+*/
+/*
+	>	loading textures from bmp files requires a library "bmpread"
+*/
+//============================================================================
 
 #include <iostream>
 #include <glad\glad.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
 
-#include "rotating_square.h"
-#include "multi_vbo.h"
+#include "texture.h"
+#include "bitmap.h"
 
 using namespace std;
+
+#define	SCREEN_WIDTH	1920
+#define	SCREEN_HEIGHT	1080
 
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcGradVertex120 = R"END(
+const GLchar* pglcVertex120 = R"END(
 	 #version 120
 	 attribute vec3 inPosition;
+	 //============================================================================
+	 // for texture
+	 attribute vec2 inUVs;
+	 varying vec2 outUVs;
+	 //============================================================================
+	 // for reversed texture
+	 uniform mat4 matrix;
+	 //============================================================================
 	 void main()
 	 {
-		gl_Position = vec4(inPosition, 1);
+		 outUVs = inUVs;
+		 gl_Position = matrix * vec4(inPosition, 1);
+		 // multiplication is actually translation
 	 }
 	 )END";
 // fragment shader: fills the screen
-const GLchar* pglcGradRaster120 = R"END(
+const GLchar* pglcRaster120 = R"END(
 	 #version 120
 	 uniform vec2 resolution;	// required for proper gradient transition
+	 // define a time variable
+	 uniform float time;
+	 //============================================================================
+	 // for texture
+	 varying vec2 outUVs;
+	 uniform sampler2D texture;	// to access texture data, default 1st texture slot
+	 //============================================================================
 	 void main()
 	 {
-		float intensity = gl_FragCoord.y / resolution.y;	// for smooth transition
-													// from 0 to 1
-		gl_FragColor = vec4(intensity, intensity, intensity, 1);// greyscale
+		 //============================================================================
+		 // sampling the image
+		 gl_FragColor = texture2D(texture, outUVs);
+		 //============================================================================
 	 }
 	 )END";
 //============================================================================
@@ -85,7 +111,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcGradVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -116,7 +142,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcGradRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -173,6 +199,14 @@ main(void)
 	glUseProgram(gluShaderProgramme);
 	// unless changed, this means that all draw calls used afterwards use this context
 	//============================================================================
+	// the texture image is printed reversed, one solution is transformation matrix
+	GLfloat glfMatrix[] = {	// an identity matrix
+		-1, 0, 0, 0,		// reversing x axis
+		0, -1, 0, 0,		// reversing y axis, both allow for rotation around z axis
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+	//============================================================================
 	// Multiple VBOs
 	// there can be a set of input buffers, each representing a parameter (colour, coordinates)
 	// these buffers are then must be bound to the vertex shader
@@ -198,9 +232,55 @@ main(void)
 	// send the data to the GPU
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glfPositions), glfPositions, GL_STATIC_DRAW); // acts like memcpy() but from RAM to GPU
 	//============================================================================
+	// define texture coordinates
+	GLfloat glfUVs[] = {
+		0, 0,	// this is at the bottom left
+		0, 1,	// this is at top left
+		1, 0,	// this is at bottom right
+		1, 0,
+		0, 1,
+		1, 1	// this is at top right
+	}; 
+	//============================================================================
+	// generate VBO for UV data
+	GLuint gluiUVsData;
+	glGenBuffers(1, &gluiUVsData);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiUVsData);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glfUVs), glfUVs, GL_STATIC_DRAW);
+	//============================================================================
+	// bitmap
+	bmpread_t bitmap;
+
+	if(!bmpread("texture.bmp", 0, &bitmap))	// to read the bmp file
+	{
+		cout << "Texture loading error\n" << endl;
+		exit(-1);
+	}
+	//============================================================================
+	// generating texture resource
+	GLuint gluiTextureID;
+	glGenTextures(1, &gluiTextureID);
+	glBindTexture(GL_TEXTURE_2D, gluiTextureID);
+	//============================================================================
+	// texture parameters for filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	//============================================================================
+	// provide the texture data that matches the bitmap
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, bitmap.width, bitmap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bitmap.data);
+
+	//============================================================================
+	GLuint gluiAttribMatrix;
+	// find the uniform location, as usual
+	gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
+	glUniformMatrix4fv(gluiAttribMatrix, 1/*it is one unit of matrix*/, GL_FALSE, glfMatrix);
+
+
+	//============================================================================
 	// setting up attributes
 	GLuint gluAttribPosition;
-
+	
 	// get the location of the attribute
 	gluAttribPosition = glGetAttribLocation(gluShaderProgramme, "inPosition");
 	// enable the attribute
@@ -209,17 +289,41 @@ main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, gluDataPositions);
 	// configure attribute stripe, specify the format
 	glVertexAttribPointer(gluAttribPosition, 3, GL_FLOAT, GL_FALSE, 0 /* stripe size is currently irrelevant */, 0);
+	//============================================================================
+	// setting up attributes for UV data
+	GLuint gluiAttribUVs;
+	gluiAttribUVs = glGetAttribLocation(gluShaderProgramme, "inUVs");
+	glEnableVertexAttribArray(gluiAttribUVs);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiUVsData);
+	// setup vertix attribute pointer
+	glVertexAttribPointer(gluiAttribUVs,
+							2/*the attribute consist of 2 floats*/,
+							GL_FLOAT,
+							GL_FALSE, /*normalise the attribute*/
+							0,
+							0);
 
+	//============================================================================
 	// resolution uniform
 	GLuint gluUniformResolution;
-	gluUniformResolution = glGetUniformLocation(gluShaderProgramme, "resolution");
-	glUniform2f(gluUniformResolution, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+	gluUniformResolution = glGetUniformLocation(gluShaderProgramme,"resolution");
+	glUniform2f(gluUniformResolution,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
+	//============================================================================
+	// uniform time
+	GLuint gluUniformTime;
+	gluUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
 	//============================================================================
 	// render loop
 	while (!glfwWindowShouldClose(glfwWindow))
 	{
 		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		//============================================================================
+		// each update loop
+		float fltTime = glfwGetTime();
+		glUniform1f(gluUniformTime, fltTime);
+		//============================================================================
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 

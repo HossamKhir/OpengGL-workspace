@@ -1,12 +1,12 @@
 /*
- * rotating_square.h
+ * gradient.h
  *
- *  Created on: 25 Jan 2020
+ *  Created on: 9 Mar 2020
  *      Author: hossam
  */
 
-#ifndef ROTATING_SQUARE_H_
-#define ROTATING_SQUARE_H_
+#ifndef _GRADIENT_H_
+#define _GRADIENT_H_
 
 #define	SCREEN_WIDTH	1920
 #define	SCREEN_HEIGHT	1080
@@ -16,7 +16,6 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
-int
-rotating_square(void);
+int gradient(void);
 
-#endif /* ROTATING_SQUARE_H_ */
+#endif /* _GRADIENT_H_ */
