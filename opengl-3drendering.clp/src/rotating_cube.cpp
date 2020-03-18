@@ -1,31 +1,21 @@
-// main.cpp : Defines the entry point for the console application.
-//============================================================================
 /*
-	>	for 3D rendering, the 3rd dimension in space (z-axis) will be required
-	>	for a 3D cube, it has 6 faces, each face built using 2 triangles, so
-	the winding direction should be fixed (clockwise)
-*/
-//============================================================================
+ * rotating_cube.cpp
+ *
+ *  Created on: 18 Mar 2020
+ *      Author: hossam
+ */
 
-#include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <math.h>
 
-#include "bmpread.h"
 
-#include "cube.h"
+
 #include "rotating_cube.h"
 
 using namespace std;
 
-#define	SCREEN_WIDTH	1920
-#define	SCREEN_HEIGHT	1080
-
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcVertex120 = R"END(
+const GLchar* pglcRotatingCubeVertex120 = R"END(
 	#version 120
 	attribute vec3 position;
 	attribute vec3 colour;
@@ -64,7 +54,7 @@ const GLchar* pglcVertex120 = R"END(
 	}
 	)END";
 // fragment shader: fills the screen
-const GLchar* pglcRaster120 = R"END(
+const GLchar* pglcRotatingCubeRaster120 = R"END(
 	#version 120
 	varying vec3 outColour;
 	varying vec2 outUVs;
@@ -80,8 +70,9 @@ const GLchar* pglcRaster120 = R"END(
 	)END";
 //============================================================================
 
+
 int
-main(void)
+rotating_cube(void)
 {
 	GLFWwindow* glfwWindow;
 
@@ -112,7 +103,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcRotatingCubeVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -143,7 +134,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcRotatingCubeRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -214,7 +205,7 @@ main(void)
 	  4 *  |   * 3 <-- 7 is the last vertex behind the visible faces
 		 \ |  /
 		   *
-		   0   
+		   0
 	*/
 
 	// setting up the cube using indexed drawing
@@ -229,7 +220,7 @@ main(void)
         +1, +1, -1, // index 6
         +1, -1, -1, // index 7
 		/* in order to put a texture on a face,
-		sperate vertices should be defined for such face to avoid artifacts */
+		separate vertices should be defined for such face to avoid artifacts */
 		// the same vertices of the front face
 		-1, -1, +1, // index 8
         -1, +1, +1,	// index 9
@@ -257,7 +248,7 @@ main(void)
 		1, 1, 1
 	};
 
-	/* defining the indices, to refer to the vertices to create triangles using 
+	/* defining the indices, to refer to the vertices to create triangles using
 	indices only */
 	GLubyte glubIndices[] = {
 		0, 1, 2,	// front right face, triangle 0
@@ -315,11 +306,11 @@ main(void)
         0, 0, 0.5, 0,
         0, 0, 0, 1
     };
-    
+
     GLuint gluiAttribMatrix;
     gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
     glUniformMatrix4fv(gluiAttribMatrix, 1, GL_FALSE, glfMatrix);
-    
+
     GLuint gluiUniformTime;
     gluiUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
 	//============================================================================
@@ -339,14 +330,14 @@ main(void)
     glGenTextures(1, &gluiTextureID);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gluiTextureID);
-    
+
 	// setting texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
+
     glTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);
-    
+
     GLuint attribTex = glGetAttribLocation(gluShaderProgramme, "texture");
     glUniform1i(attribTex, 0);
 	//============================================================================
@@ -365,12 +356,12 @@ main(void)
         1, 1,
         1, 0,
     };
-    
+
     GLuint gluiUVData;
     glGenBuffers(1, &gluiUVData);
     glBindBuffer(GL_ARRAY_BUFFER, gluiUVData);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glfUVs), glfUVs, GL_STATIC_DRAW);
-    
+
     GLuint gluiAttribUVs;
     gluiAttribUVs = glGetAttribLocation(gluShaderProgramme, "inUVs");
     glEnableVertexAttribArray(gluiAttribUVs);
