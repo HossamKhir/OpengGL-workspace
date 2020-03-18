@@ -1,39 +1,14 @@
-// main.cpp : Defines the entry point for the console application.
-//============================================================================
 /*
-	>	for 3D rendering, the 3rd dimension in space (z-axis) will be required
-	>	for a 3D cube, it has 6 faces, each face built using 2 triangles, so
-	the winding direction should be fixed (clockwise)
-*/
-/*
-	>	perspective projection:
-	the way we perceive/see real life objects with our eyes
-	the eye line is dependant on the height of the viewer, the taller they are
-	the higher the horizon, and further the vanishing point
-	>	perspective requires: FOV (field of view), aspect ratio, near plane & 
-	far plane
-	>	all objects that should appear must lie within the space between the 
-	near & far planes
-*/
-//============================================================================
+ * perspective_rotating_cube.cpp
+ *
+ *  Created on: 18 Mar 2020
+ *      Author: hossam
+ */
 
-#include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <math.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
-#include "bmpread.h"
 
-#include "cube.h"
-#include "rotating_cube.h"
 #include "perspective_rotating_cube.h"
-
-#define	SCREEN_WIDTH	1920
-#define	SCREEN_HEIGHT	1080
 
 using namespace std;
 using namespace glm;
@@ -41,7 +16,7 @@ using namespace glm;
 //============================================================================
 // shader source codes
 // vertex shader: transforms the geometry
-const GLchar* pglcVertex120 = R"END(
+const GLchar* pglcPerspectiveVertex120 = R"END(
 	#version 120
 	attribute vec3 position;
 	attribute vec3 colour;
@@ -81,7 +56,7 @@ const GLchar* pglcVertex120 = R"END(
 	}
 	)END";
 // fragment shader: fills the screen
-const GLchar* pglcRaster120 = R"END(
+const GLchar* pglcPerspectiveRaster120 = R"END(
 	#version 120
 	varying vec3 outColour;
 	varying vec2 outUVs;
@@ -97,8 +72,9 @@ const GLchar* pglcRaster120 = R"END(
 	)END";
 //============================================================================
 
+
 int
-main(void)
+perspective_rotating_cube(void)
 {
 	GLFWwindow* glfwWindow;
 
@@ -129,7 +105,7 @@ main(void)
 	GLuint gluVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	// assign source code for shader
-	glShaderSource(gluVertexShader, 1, &pglcVertex120, 0);
+	glShaderSource(gluVertexShader, 1, &pglcPerspectiveVertex120, 0);
 
 	// compile the shader
 	glCompileShader(gluVertexShader);
@@ -160,7 +136,7 @@ main(void)
 	GLuint gluFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	// provide source code for shader
-	glShaderSource(gluFragmentShader, 1, &pglcRaster120, 0);
+	glShaderSource(gluFragmentShader, 1, &pglcPerspectiveRaster120, 0);
 
 	// compile shader's source code
 	glCompileShader(gluFragmentShader);
@@ -219,89 +195,89 @@ main(void)
 	//============================================================================
 	// indexed drawing
 	/*
-		indexed drawing: each vertex must have a unique index, and each triangle is
-		defined by indices not vertices
-		    6
-			*
-		  /   \
-	  5 *      * 2
-		|\ 1  /|
-		|  *   |
-		|  |   |
-	  4 *  |   * 3 <-- 7 is the last vertex behind the visible faces
-		 \ |  /
-		   *
-		   0   
-	*/
+			indexed drawing: each vertex must have a unique index, and each triangle is
+			defined by indices not vertices
+			    6
+	 *
+			  /   \
+		  5 *      * 2
+			|\ 1  /|
+			|  *   |
+			|  |   |
+		  4 *  |   * 3 <-- 7 is the last vertex behind the visible faces
+			 \ |  /
+	 *
+			   0
+	 */
 
 	// setting up the cube using indexed drawing
 	// defining the vertices in clockwise direction
 	GLfloat glfVertices[] = {
-		-1, -1, +1, // index 0
-        -1, +1, +1,	// index 1
-        +1, +1, +1,	// index 2
-        +1, -1, +1,	// index 3
-        -1, -1, -1,	// index 4
-        -1, +1, -1,	// index 5
-        +1, +1, -1, // index 6
-        +1, -1, -1, // index 7
-		/* in order to put a texture on a face,
-		sperate vertices should be defined for such face to avoid artifacts */
-		// the same vertices of the front face
-		-1, -1, +1, // index 8
-        -1, +1, +1,	// index 9
-        +1, +1, +1,	// index 10
-        +1, -1, +1,	// index 11
+			-1, -1, +1, // index 0
+			-1, +1, +1,	// index 1
+			+1, +1, +1,	// index 2
+			+1, -1, +1,	// index 3
+			-1, -1, -1,	// index 4
+			-1, +1, -1,	// index 5
+			+1, +1, -1, // index 6
+			+1, -1, -1, // index 7
+			/* in order to put a texture on a face,
+			sperate vertices should be defined for such face to avoid artifacts */
+			// the same vertices of the front face
+			-1, -1, +1, // index 8
+			-1, +1, +1,	// index 9
+			+1, +1, +1,	// index 10
+			+1, -1, +1,	// index 11
 	};
 
 	/* defining colours for vertices, it must be in the same order as the
-	vertices as it will be indexed as well */
+		vertices as it will be indexed as well */
 	GLfloat glfColours[] = {
-		1, 0, 0, // red, green, blue
-        0, 1, 0,
-        0, 0, 1,
-        1, 0, 1,
-        1, 1, 0,
-        0, 1, 1,
-        0, 1, 0,
-        1, 0, 0,
-		/* what applies on vertices,
-		applies on colours */
-		// define white colour
-		1, 1, 1,
-		1, 1, 1,
-		1, 1, 1,
-		1, 1, 1
+			1, 0, 0, // red, green, blue
+			0, 1, 0,
+			0, 0, 1,
+			1, 0, 1,
+			1, 1, 0,
+			0, 1, 1,
+			0, 1, 0,
+			1, 0, 0,
+			/* what applies on vertices,
+			applies on colours */
+			// define white colour
+			1, 1, 1,
+			1, 1, 1,
+			1, 1, 1,
+			1, 1, 1
 	};
 
-	/* defining the indices, to refer to the vertices to create triangles using 
-	indices only */
+	/* defining the indices, to refer to the vertices to create triangles using
+		indices only */
 	/* drawing wireframes is done by drawing edges instead of triangles */
 	GLubyte glubIndices[] = {
-		0, 1,	// front face, edge 0
-		1, 2,	// front face, edge 1
-		2, 3,	// front face, edge 2
-		3, 0,	// front face, edge 3
-		0, 4,	// left face, edge 0
-		4, 5,	// left face, edge 1
-		5, 1,	// left face, edge 2
-		1, 0,	// left face, edge 3
-		1, 5,	// top face, edge 0
-		5, 6,	// top face, edge 1
-		6, 2,	// top face, edge 2
-		2, 1,	// top face, edge 3
-		3, 2,	// right face, edge 0
-		2, 6,	// right face, edge 1
-		6, 7,	// right face, edge 2
-		7, 3,	// right face, edge 3
-		7, 6,
-		6, 5,
-		5, 4,
-		4, 7,
-		0, 3,
-		3, 7,
-		7, 4,
-		4, 0
+			0, 1,	// front face, edge 0
+			1, 2,	// front face, edge 1
+			2, 3,	// front face, edge 2
+			3, 0,	// front face, edge 3
+			0, 4,	// left face, edge 0
+			4, 5,	// left face, edge 1
+			5, 1,	// left face, edge 2
+			1, 0,	// left face, edge 3
+			1, 5,	// top face, edge 0
+			5, 6,	// top face, edge 1
+			6, 2,	// top face, edge 2
+			2, 1,	// top face, edge 3
+			3, 2,	// right face, edge 0
+			2, 6,	// right face, edge 1
+			6, 7,	// right face, edge 2
+			7, 3,	// right face, edge 3
+			7, 6,
+			6, 5,
+			5, 4,
+			4, 7,
+			0, 3,
+			3, 7,
+			7, 4,
+			4, 0
 	};
 	// adjacent edges will be overdrawn
 	//============================================================================
@@ -338,72 +314,45 @@ main(void)
 	glVertexAttribPointer(gluiAttribColour, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	//============================================================================
 	GLfloat glfMatrix[] = {
-        0.5, 0, 0, 0,
-        0, 0.5, 0, 0,
-        0, 0, 0.5, 0,
-        0, 0, 0, 1
-    };
-    
-    GLuint gluiAttribMatrix;
-    gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
-    glUniformMatrix4fv(gluiAttribMatrix, 1, GL_FALSE, glfMatrix);
-    
-    GLuint gluiUniformTime;
-    gluiUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
-	//============================================================================
-	// texture
-	/* the bmpread library is very sensitive to bmp format;
-	so the bmp must be 32 bit in depth */
-	/*bmpread_t bitmap;
+			0.5, 0, 0, 0,
+			0, 0.5, 0, 0,
+			0, 0, 0.5, 0,
+			0, 0, 0, 1
+	};
 
-	if(!bmpread("texture.bmp", 0, &bitmap))
-	{
-		cout << "texture loading error" << endl;
-		exit(-1);
-	}
+	GLuint gluiAttribMatrix;
+	gluiAttribMatrix = glGetUniformLocation(gluShaderProgramme, "matrix");
+	glUniformMatrix4fv(gluiAttribMatrix, 1, GL_FALSE, glfMatrix);
 
-	GLuint gluiTextureID;
-	// generating texture
-    glGenTextures(1, &gluiTextureID);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, gluiTextureID);
-    
-	// setting texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
-    glTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);
-    
-    GLuint attribTex = glGetAttribLocation(gluShaderProgramme, "texture");
-    glUniform1i(attribTex, 0);*/
+	GLuint gluiUniformTime;
+	gluiUniformTime = glGetUniformLocation(gluShaderProgramme, "time");
 	//============================================================================
 	// texture attributes: UVs
-    GLfloat glfUVs[] = {
-        0, 0,	// the zero is for vertices that should not be textured
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,	// full rectangle for additional vertices
-        0, 1,
-        1, 1,
-        1, 0,
-    };
-    
-    GLuint gluiUVData;
-    glGenBuffers(1, &gluiUVData);
-    glBindBuffer(GL_ARRAY_BUFFER, gluiUVData);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glfUVs), glfUVs, GL_STATIC_DRAW);
-    
-    GLuint gluiAttribUVs;
-    gluiAttribUVs = glGetAttribLocation(gluShaderProgramme, "inUVs");
-    glEnableVertexAttribArray(gluiAttribUVs);
-    glBindBuffer(GL_ARRAY_BUFFER, gluiUVData);
-    glVertexAttribPointer(gluiAttribUVs, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	GLfloat glfUVs[] = {
+			0, 0,	// the zero is for vertices that should not be textured
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 0,
+			0, 0,	// full rectangle for additional vertices
+			0, 1,
+			1, 1,
+			1, 0,
+	};
+
+	GLuint gluiUVData;
+	glGenBuffers(1, &gluiUVData);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiUVData);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glfUVs), glfUVs, GL_STATIC_DRAW);
+
+	GLuint gluiAttribUVs;
+	gluiAttribUVs = glGetAttribLocation(gluShaderProgramme, "inUVs");
+	glEnableVertexAttribArray(gluiAttribUVs);
+	glBindBuffer(GL_ARRAY_BUFFER, gluiUVData);
+	glVertexAttribPointer(gluiAttribUVs, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	//============================================================================
 	// fixing the order of drawing problem
 	// disabling backface culling for wireframe
@@ -419,9 +368,9 @@ main(void)
 	//============================================================================
 	// projection matrix
 	mat4 m4ProjectionMatrix	= glm::perspective(glm::radians(60.0f),
-		(float)(SCREEN_WIDTH/SCREEN_HEIGHT),
-		0.0f,
-		10.0f) * m4ScaleMatrix;
+			(float)(SCREEN_WIDTH/SCREEN_HEIGHT),
+			0.0f,
+			10.0f) * m4ScaleMatrix;
 
 	GLint gliUniformProjection = glGetUniformLocation(gluShaderProgramme, "projection");
 	glUniformMatrix4fv(gliUniformProjection, 1, GL_FALSE, value_ptr(m4ProjectionMatrix));
@@ -433,7 +382,7 @@ main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		float time = glfwGetTime();
-        glUniform1f(gluiUniformTime, time);
+		glUniform1f(gluiUniformTime, time);
 
 		//============================================================================
 		// indexed drawing requires call of a different function
